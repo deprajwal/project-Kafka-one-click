@@ -56,29 +56,7 @@ resource "aws_security_group" "alb_sg" {
   }
 }
 
-# Security group for private application EC2 instances.
-resource "aws_security_group" "app_sg" {
-  name        = "kafka-one-click-app-sg"
-  description = "Allow HTTP traffic from the ALB"
-  vpc_id      = aws_vpc.kafka_vpc.id
-
-  ingress {
-    description     = "HTTP from the ALB"
-    from_port       = var.app_port
-    to_port         = var.app_port
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb_sg.id]
-  }
-
-  # Allow outbound connections through the NAT Gateway.
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
+# Security group for private application EC2 instances.tags = {
     Name    = "kafka-one-click-app-sg"
     Project = "kafka-one-click-infra"
   }

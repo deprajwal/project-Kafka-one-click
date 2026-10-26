@@ -15,43 +15,11 @@ resource "aws_lb" "app_alb" {
     Project = "kafka-one-click-infra"
   }
 }
-
-# Target group for application EC2 instances
-resource "aws_lb_target_group" "app_tg" {
-  name        = "kafka-one-click-app-tg"
-  port        = var.app_port
-  protocol    = "HTTP"
-  vpc_id      = aws_vpc.kafka_vpc.id
-  target_type = "instance"
-
-  health_check {
-    enabled             = true
-    path                = var.health_check_path
-    protocol            = "HTTP"
-    matcher             = "200"
-    interval            = 30
-    timeout             = 5
-    healthy_threshold   = 2
-    unhealthy_threshold = 3
-  }
-
   tags = {
     Name    = "kafka-one-click-app-tg"
     Project = "kafka-one-click-infra"
   }
-}
 
-# HTTP listener for the ALB
-resource "aws_lb_listener" "app_listener" {
-  load_balancer_arn = aws_lb.app_alb.arn
-  port              = 80
-  protocol          = "HTTP"
-
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.app_tg.arn
-  }
-}
 
 # Launch template for application EC2 instances
 resource "aws_launch_template" "app_template" {
@@ -144,20 +112,6 @@ resource "aws_autoscaling_group" "app_asg" {
   depends_on = [aws_lb_listener.app_listener]
 }
 
-# CPU-based target tracking policy
-resource "aws_autoscaling_policy" "app_cpu_scaling" {
-  name                   = "kafka-one-click-cpu-scaling"
-  policy_type            = "TargetTrackingScaling"
-  autoscaling_group_name = aws_autoscaling_group.app_asg.name
-
-  target_tracking_configuration {
-    predefined_metric_specification {
-      predefined_metric_type = "ASGAverageCPUUtilization"
-    }
-
-    target_value = var.app_cpu_target
-  }
-}
 
 # ALB DNS name output
 output "app_alb_dns_name" {

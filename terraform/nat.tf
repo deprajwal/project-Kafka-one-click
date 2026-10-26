@@ -14,13 +14,6 @@ resource "aws_nat_gateway" "kafka_nat" {
   allocation_id = aws_eip.nat_eip.id
   subnet_id     = aws_subnet.public_subnet.id
 
-  tags = {
-    Name    = "kafka-one-click-nat"
-    Project = "kafka-one-click-infra"
-  }
-
-  depends_on = [aws_internet_gateway.kafka_igw]
-}
 
 # Route private subnet AZ A internet traffic through the NAT Gateway.
 resource "aws_route" "private_nat_route" {
@@ -29,9 +22,4 @@ resource "aws_route" "private_nat_route" {
   nat_gateway_id         = aws_nat_gateway.kafka_nat.id
 }
 
-# Route private subnet AZ B internet traffic through the existing NAT Gateway.
-resource "aws_route" "private_nat_route_2" {
-  route_table_id         = aws_route_table.private_route_table_2.id
-  destination_cidr_block = "0.0.0.0/0"
-  nat_gateway_id         = aws_nat_gateway.kafka_nat.id
-}
+

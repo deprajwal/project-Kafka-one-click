@@ -43,14 +43,3 @@ resource "aws_route_table_association" "private_association" {
   route_table_id = aws_route_table.private_route_table.id
 }
 
-# Public subnet AZ B association
-resource "aws_route_table_association" "public_association_2" {
-  subnet_id      = aws_subnet.public_subnet_2.id
-  route_table_id = aws_route_table.public_route_table.id
-}
-
-# Private subnet AZ B association
-resource "aws_route_table_association" "private_association_2" {
-  subnet_id      = aws_subnet.private_subnet_2.id
-  route_table_id = aws_route_table.private_route_table_2.id
-}

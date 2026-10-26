@@ -33,13 +33,3 @@ output "kafka_instance_id" {
   value       = aws_instance.kafka_server.id
 }
 
-output "kafka_private_ip" {
-  description = "Private IP address of the Kafka server"
-  value       = aws_instance.kafka_server.private_ip
-}
-
-# SSM transfer bucket
-output "ssm_transfer_bucket" {
-  description = "S3 bucket used by the Ansible SSM connection"
-  value       = aws_s3_bucket.ssm_transfer.bucket
-}

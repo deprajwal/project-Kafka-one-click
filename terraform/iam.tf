@@ -1,17 +1,7 @@
 
 # Define the trust policy that allows EC2 to assume this role.
 data "aws_iam_policy_document" "ec2_assume_role" {
-  statement {
-    effect = "Allow"
-
-    principals {
-      type        = "Service"
-      identifiers = ["ec2.amazonaws.com"]
-    }
-
-    actions = ["sts:AssumeRole"]
-  }
-}
+  
 
 # Create an IAM role for the Kafka EC2 instance.
 resource "aws_iam_role" "kafka_ec2_role" {
