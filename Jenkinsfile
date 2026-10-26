@@ -88,30 +88,9 @@ pipeline {
             }
         }
 
-        stage('Wait for SSM Online') {
-            when {
-                expression { params.ACTION == 'CREATE' }
-            }
-            steps {
-                script {
-                    env.KAFKA_INSTANCE_ID = sh(
-                        script: 'terraform -chdir=terraform output -raw kafka_instance_id',
-                        returnStdout: true
-                    ).trim()
-                }
-
-                sh '''
+        
                     set -eu
                     echo "Waiting for SSM: ${KAFKA_INSTANCE_ID}"
-
-                    for i in $(seq 1 60); do
-                        STATUS=$(aws ssm describe-instance-information \
-                            --region "$AWS_DEFAULT_REGION" \
-                            --filters "Key=InstanceIds,Values=${KAFKA_INSTANCE_ID}" \
-                            --query 'InstanceInformationList[0].PingStatus' \
-                            --output text 2>/dev/null || true)
-
-                        echo "SSM status: $STATUS (attempt $i/60)"
 
                         if [ "$STATUS" = "Online" ]; then
                             echo "Kafka EC2 is Online in SSM."
@@ -190,33 +169,10 @@ INVENTORY
 
                     COMMAND_ID=$(aws ssm send-command \
                         --region "$AWS_DEFAULT_REGION" \
-                        --instance-ids "$KAFKA_INSTANCE_ID" \
-                        --document-name "AWS-RunShellScript" \
-                        --parameters '{"commands":["for i in $(seq 1 30); do STATUS=$(sudo systemctl is-active kafka 2>/dev/null || true); if [ \\"$STATUS\\" = \\"active\\" ]; then break; fi; sleep 10; done; echo Kafka_service_status=$(sudo systemctl is-active kafka 2>/dev/null || true); sudo systemctl status kafka --no-pager -l; sudo journalctl -u kafka -n 80 --no-pager; sudo systemctl is-active kafka && sudo -u kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list"]}' \
-                        --query 'Command.CommandId' \
+                        --instance-ids "$KAFKA_INSTANCE_ID" 
                         --output text)
 
-                    echo "SSM Command ID: $COMMAND_ID"
-
-                    for i in $(seq 1 100); do
-                        STATUS=$(aws ssm get-command-invocation \
-                            --region "$AWS_DEFAULT_REGION" \
-                            --command-id "$COMMAND_ID" \
-                            --instance-id "$KAFKA_INSTANCE_ID" \
-                            --query 'Status' \
-                            --output text 2>/dev/null || true)
-
-                        case "$STATUS" in
-                            Success)
-                                echo "Kafka verification passed."
-                                aws ssm get-command-invocation \
-                                    --region "$AWS_DEFAULT_REGION" \
-                                    --command-id "$COMMAND_ID" \
-                                    --instance-id "$KAFKA_INSTANCE_ID" \
-                                    --query 'StandardOutputContent' \
-                                    --output text
-                                exit 0
-                                ;;
+                    
                             Failed|Cancelled|TimedOut)
                                 echo "Kafka verification failed: $STATUS"
                                 aws ssm get-command-invocation \
